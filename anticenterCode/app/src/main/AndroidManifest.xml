@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="false" />
+
+    <!-- 基础通话/号码相关 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- 如需历史通话记录再开启 (高敏感) -->
+    <!-- <uses-permission android:name="android.permission.READ_CALL_LOG" /> -->
+
+    <!-- 通讯录 -->
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- 短信：读取 + 接收 -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+    
+    <!-- CSV文件导出权限 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" 
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+
+    <!-- 录音（用于潜在语音诈骗分析或语音指令） -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    
+    <!-- 通话管理权限（用于InCallService） -->
+    <uses-permission android:name="android.permission.MANAGE_OWN_CALLS" />
+    <uses-permission android:name="android.permission.CONTROL_INCALL_EXPERIENCE" />
+
+    <!-- 悬浮窗（系统设置里单独授权；用于跨应用风险警示） -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Android 13+ 通知 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    
+    <!-- 全屏通知权限（用于强制弹出 Heads-up 通知） -->
+    <uses-permission android:name="android.permission.USE_FULL_SCREEN_INTENT" />
+
+    <!-- Android 9+ 前台服务基础权限（必需） -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <!-- Android 14+ 细化前台服务权限：与 foregroundServiceType 一一对应 -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_PHONE_CALL" />
+    
+    <!-- MediaProjection屏幕录制相关权限 -->
+    <uses-permission android:name="android.permission.CAPTURE_VIDEO_OUTPUT" />
+    <uses-permission android:name="android.permission.SYSTEM_AUDIO_OUTPUT" tools:ignore="ProtectedPermissions" />
+    <!-- 尝试添加可能需要的MediaProjection相关权限 -->
+    <uses-permission android:name="android.permission.PROJECT_MEDIA" tools:ignore="UnknownPermission" />
+
+    <!-- 保持设备唤醒 (录屏时防止休眠) -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- 访问网络状态 (Reality Defender API需要) -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Anticenter">
+
+        <!-- 核心前台调度服务：负责聚合通知 / 无障碍事件并触发警示 -->
+        <service
+            android:name=".services.CoreProtectionService"
+            android:exported="false"
+            android:enabled="true"
+            android:foregroundServiceType="dataSync|microphone" />
+
+        <!-- 通知监听（需用户在系统设置开启“通知使用权”） -->
+        <service
+            android:name=".services.AntiCenterNotificationListener"
+            android:label="AntiCenter Notification Listener"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- 无障碍监听（需用户在系统无障碍设置中手动开启） -->
+        <service
+            android:name=".services.AntiCenterAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:exported="true"
+            android:label="AntiCenter Accessibility">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/anticenter_accessibility_config" />
+        </service>
+        <!-- Zoom 屏幕采集服务声明 -->
+        <service
+            android:name=".services.ZoomCapService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection|microphone" />
+        <!-- 通话录音服务 -->
+        <service
+            android:name="com.example.anticenter.services.CallRecordService"
+            android:exported="false"
+            android:foregroundServiceType="phoneCall|microphone" />
+
+        <!-- InCall服务：监听通话状态变化 -->
+        <service
+            android:name=".services.BcrInCallService"
+            android:permission="android.permission.BIND_INCALL_SERVICE"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.telecom.InCallService" />
+            </intent-filter>
+        </service>
+
+        <!-- Gmail 监控服务：用于邮件保护功能 -->
+        <service
+            android:name=".services.GmailMonitorService"
+            android:exported="false"
+            android:enabled="true"
+            android:foregroundServiceType="dataSync" />
+
+        <!-- 悬浮横幅服务：用于跨应用显示风险警示 Banner -->
+        <service
+            android:name=".services.OverlayBannerService"
+            android:exported="false"
+            android:enabled="true" />
+
+        <!-- FileProvider for CSV file sharing -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
+        <!-- MediaProjection权限请求Activity -->
+        <activity
+            android:name=".activities.MediaProjectionPermissionActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Anticenter.NoActionBar"
+            android:taskAffinity=""
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true" />
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.Anticenter">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

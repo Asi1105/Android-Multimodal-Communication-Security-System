@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 缓存目录，用于临时存储导出的CSV文件 -->
+    <cache-path name="csv_exports" path="." />
+    
+    <!-- 外部文件目录，用于CSV导出 -->
+    <external-files-path name="csv_files" path="." />
+    
+    <!-- 外部存储根目录 -->
+    <external-path name="external_storage" path="." />
+    
+    <!-- 下载目录 -->
+    <external-path name="downloads" path="Download" />
+</paths>

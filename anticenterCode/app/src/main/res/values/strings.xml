@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">anticenter</string>
+    <string name="anticenter_accessibility_description">AntiCenter accessibility monitoring service for risk detection.</string>
+</resources>

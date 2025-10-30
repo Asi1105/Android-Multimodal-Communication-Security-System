@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="20dp"
+    android:height="20dp"
+    android:viewportWidth="20"
+    android:viewportHeight="20">
+    <!-- 简化的向下 V 形 chevron，接近 Material ExpandMore -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="nonZero"
+        android:pathData="M6,8 L10,12 L14,8 L15,9 L10,14 L5,9 Z"/>
+</vector>
