@@ -1,1 +1,1 @@
-# CS7-3-2025-S2
+anticenter demo和安装指南
